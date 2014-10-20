@@ -1,6 +1,5 @@
 module BaiduPush
   class Client
-
     API_HOST = 'channel.api.duapp.com'
     DEFAULT_RESOURCE = 'channel'
 
@@ -9,11 +8,17 @@ module BaiduPush
       api_version: '2.0'
     }
 
-    attr_reader :api_key, :secret_key, :api_url, :request, :options
+    def self.config
+      yield self
+    end
+
+    mattr_accessor :api_key, :secret_key, :deploy_status,:ios_cert_name, 
+                   :ios_cert_desc, :ios_dev_cert, :ios_rel_cert
+    attr_reader :api_url, :request, :options
     attr_accessor :resource
 
-    def initialize(api_key, secret_key, options = {})
-      @api_key, @secret_key = (api_key || '').strip, (secret_key || '').strip
+    def initialize(key=api_key, secret=secret_key, options = {})
+      @@api_key, @@secret_key = (key || '').strip, (secret || '').strip
       @options = DEFAULT_OPTIONS.merge options
 
       set_api_url
@@ -33,17 +38,18 @@ module BaiduPush
       params.merge!({
         push_type: push_type,
         messages: messages.to_json,
-        msg_keys: msg_keys
+        msg_keys: msg_keys,
+        deploy_status: deploy_status
       })
       @request.fetch(:push_msg, params)
     end
 
-    def init_app_ioscert(name, description, release_cert, dev_cert, params = {})
+    def init_app_ioscert(params = {})
       params.merge!({
-        name: name,
-        description: description,
-        release_cert: release_cert,
-        dev_cert: dev_cert
+        name: ios_cert_name,
+        description: ios_cert_desc,
+        release_cert: ios_rel_cert,
+        dev_cert: ios_dev_cert
       })
       @request.fetch(:init_app_ioscert, params)
     end
